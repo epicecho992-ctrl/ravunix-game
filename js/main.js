@@ -801,7 +801,7 @@ document.addEventListener('pointerlockchange', () => { if (document.pointerLockE
   }, { passive: true });
   const lEnd = e => { for (const t of e.changedTouches) if (t.identifier === lId) { clearTimeout(holdT); if (!holding && moved < 14 && performance.now() - t0 < 320) interact(); holding = false; input.atk = false; lId = null; } };
   addEventListener('touchend', lEnd); addEventListener('touchcancel', lEnd);
-  const btn = (id, fn, up) => { const b = $(id); b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (mode === 'play' || id === 'tInv' || id === 'tPause') fn(); }); if (up) { b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); } };
+  const btn = (id, fn, up) => { const b = $(id); if (!b) return; b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (mode === 'play' || id === 'tInv' || id === 'tPause') fn(); }); if (up) { b.addEventListener('pointerup', up); b.addEventListener('pointerleave', up); } };
   btn('tJump', () => { input.jump = true; }, () => { input.jump = false; });
   btn('tSneak', () => { input.sneakT = !input.sneakT; $('tSneak').classList.toggle('on', input.sneakT); });
   btn('tTorch', toggleTorch); btn('tInv', () => { mode === 'inv' ? closeInv() : openInv(); }); btn('tPause', pauseGame);
