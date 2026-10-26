@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="hi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#04080b">
+<title>Ravunix</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<canvas id="c"></canvas>
+
+<!-- HUD -->
+<div id="hud" class="hidden">
+  <div id="objective"><b id="floorName">Basement</b><span id="objText"></span></div>
+  <div id="stats">
+    <div class="stat"><span>🔦</span><div class="bar"><i id="battBar"></i></div><em id="battTxt">100%</em></div>
+    <div class="stat"><span>🔑</span><em id="keyTxt">0/3</em></div>
+    <div class="stat"><span>👂</span><div class="bar noise"><i id="noiseBar"></i></div></div>
+    <div class="stat small"><span id="diffTxt">Normal</span><span id="cdTxt"></span></div>
+  </div>
+  <div id="crosshair"></div>
+  <div id="prompt"></div>
+  <div id="toast"></div>
+  <div id="hotbar"></div>
+  <div id="hideOverlay">Tum almaari mein chhupe ho… (Right click / tap se bahar aao)</div>
+  <div id="fade"></div>
+  <div id="vignette"></div>
+</div>
+
+<!-- Touch controls -->
+<div id="touch" class="hidden">
+  <div id="stick"><i id="stickKnob"></i></div>
+  <button id="tJump" class="tb">▲</button>
+  <button id="tSneak" class="tb">🤫</button>
+  <button id="tTorch" class="tb">🔦</button>
+  <button id="tInv" class="tb">🎒</button>
+  <button id="tPause" class="tb">⏸</button>
+  <button id="tAtk" class="tb">⚔</button>
+  <button id="tUse" class="tb">✋</button>
+</div>
+
+<!-- Main menu -->
+<div id="menu" class="screen">
+  <div class="menuBox">
+    <h1 class="title">RAVUNIX</h1>
+    <p class="tag">Raat 12 baje ke baad, is hostel ka gate andar se band ho jaata hai.</p>
+    <div class="label">Difficulty</div>
+    <div id="diffRow" class="chips"></div>
+    <p id="diffInfo" class="info"></p>
+    <button id="btnPlay" class="big">▶ Khelo</button>
+    <div class="row2">
+      <button id="btnSettings">⚙ Settings</button>
+      <button id="btnHow">❓ Kaise khelein</button>
+    </div>
+    <p class="foot">Single player • PC (keyboard + mouse) aur mobile (touch)</p>
+  </div>
+</div>
+
+<!-- How to play -->
+<div id="how" class="screen hidden">
+  <div class="menuBox wide">
+    <h2>Kaise khelein</h2>
+    <div class="cols">
+      <div>
+        <h3>🖥️ PC</h3>
+        <table>
+          <tr><td>W A S D</td><td>Chalo</td></tr>
+          <tr><td>Shift</td><td>Chupke chalo (awaaz kam)</td></tr>
+          <tr><td>Ctrl ya W W</td><td>Daudo (awaaz zyada)</td></tr>
+          <tr><td>Space</td><td>Kudo</td></tr>
+          <tr><td>Mouse</td><td>Idhar-udhar dekho</td></tr>
+          <tr><td>Left click</td><td>Attack / takhte todo</td></tr>
+          <tr><td>Right click</td><td>Use / kholo / rakho</td></tr>
+          <tr><td>E</td><td>Inventory</td></tr>
+          <tr><td>F</td><td>Torch on/off</td></tr>
+          <tr><td>1-9 / scroll</td><td>Hotbar</td></tr>
+          <tr><td>Q</td><td>Item girao</td></tr>
+        </table>
+        <p class="info">Ctrl+W browser tab band kar deta hai, isliye daudne ke liye <b>W ko do baar</b> dabao ya <b>R</b> use karo. Fullscreen (Settings) mein Ctrl bhi chalega.</p>
+      </div>
+      <div>
+        <h3>📱 Mobile</h3>
+        <table>
+          <tr><td>Left joystick</td><td>Chalo (poora aage = daudo)</td></tr>
+          <tr><td>Right screen drag</td><td>Dekho</td></tr>
+          <tr><td>Tap</td><td>Use / kholo / rakho</td></tr>
+          <tr><td>Dabaye rakho</td><td>Attack / todo</td></tr>
+          <tr><td>▲</td><td>Kudo</td></tr>
+          <tr><td>🤫</td><td>Chupke chalo</td></tr>
+          <tr><td>🎒</td><td>Inventory</td></tr>
+        </table>
+        <h3>🎯 Goal</h3>
+        <p class="info">Basement mein band ho. Fuse dhundo, generator chalao, chaabiyan jama karo, chhat ka darwaza kholo aur pipe se utarkar bhaag jao. <b>Ravunix</b> awaaz sunta hai. Chhup jao, takhte lagao, ya lathi se kuch der ke liye gira do.</p>
+      </div>
+    </div>
+    <button class="back" data-back="how">← Wapas</button>
+  </div>
+</div>
+
+<!-- Settings -->
+<div id="settings" class="screen hidden">
+  <div class="menuBox">
+    <h2>Settings</h2>
+    <label>Mouse / touch sensitivity <b id="sensV"></b><input id="sSens" type="range" min="0.3" max="3" step="0.05"></label>
+    <label>Awaaz (volume) <b id="volV"></b><input id="sVol" type="range" min="0" max="1" step="0.05"></label>
+    <label>FOV <b id="fovV"></b><input id="sFov" type="range" min="60" max="100" step="1"></label>
+    <label>Graphics
+      <select id="sGfx"><option value="low">Low (purane PC / phone)</option><option value="med">Medium</option><option value="high">High</option></select>
+    </label>
+    <label class="chk"><input id="sTouch" type="checkbox"> Touch controls dikhao</label>
+    <button id="btnFull">⛶ Fullscreen (Ctrl sprint ke liye)</button>
+    <button class="back" data-back="settings">← Wapas</button>
+  </div>
+</div>
+
+<!-- Intro -->
+<div id="intro" class="screen hidden">
+  <div class="menuBox wide introBox">
+    <p id="introText"></p>
+    <button id="btnIntroGo" class="big hidden">Shuru karo</button>
+    <button id="btnIntroSkip" class="skip">Skip ›</button>
+  </div>
+</div>
+
+<!-- Pause -->
+<div id="pause" class="screen hidden">
+  <div class="menuBox">
+    <h2>⏸ Pause</h2>
+    <button id="btnResume" class="big">▶ Wapas khelo</button>
+    <div class="row2">
+      <button id="btnPauseSettings">⚙ Settings</button>
+      <button id="btnJournal">📓 Diary</button>
+    </div>
+    <button id="btnQuit">⌂ Main menu</button>
+  </div>
+</div>
+
+<!-- Journal -->
+<div id="journal" class="screen hidden">
+  <div class="menuBox wide">
+    <h2>📓 Diary ke panne <span id="jCount"></span></h2>
+    <div id="jList"></div>
+    <button class="back" data-back="journal">← Wapas</button>
+  </div>
+</div>
+
+<!-- Inventory -->
+<div id="inv" class="screen hidden">
+  <div class="menuBox invBox">
+    <h2>🎒 Inventory</h2>
+    <div id="invGrid"></div>
+    <p class="info">Item par click/tap karke slot badlo. Marne par batteries aur takhte wahin gir jaate hain.</p>
+    <button class="back" id="btnInvClose">✕ Band karo (E)</button>
+  </div>
+</div>
+
+<!-- Dead -->
+<div id="dead" class="screen hidden">
+  <div class="menuBox">
+    <h2 class="red">💀 Ravunix ne pakad liya</h2>
+    <p id="deadText" class="info"></p>
+    <button id="btnRespawn" class="big">Basement mein wapas</button>
+    <button id="btnDeadMenu">⌂ Main menu</button>
+  </div>
+</div>
+
+<!-- Win -->
+<div id="win" class="screen hidden">
+  <div class="menuBox wide">
+    <h2>🌅 Tum bach gaye!</h2>
+    <p id="winText" class="info"></p>
+    <button id="btnWinMenu" class="big">⌂ Main menu</button>
+  </div>
+</div>
+
+<!-- Click to play (pointer lock lost) -->
+<div id="clickPlay" class="screen hidden"><div class="menuBox"><h2>Screen par click karo</h2><p class="info">Mouse lock karne ke liye click karo (Esc = pause)</p></div></div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
