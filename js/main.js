@@ -239,7 +239,7 @@ function newGame(dk) {
   const keyFloors = [1, 2, 3];
   for (let i = 0; i < d.keys; i++) spawnP('key', keyFloors[i % 3]);
   for (let i = 0; i < 5; i++) { const f = pick([0, 1, 1, 2, 2, 3]); const [x, y] = cellIn(f); addCrate(f, x, y, ri(1, 2)); }
-  spawnP('fuse', 0, r => !(r.x0 === 1 && r.y0 === 10));
+  spawnP('fuse', 0, r => r.x0 === 1 && r.y0 === 10);
   for (let i = 0; i < d.batt; i++) spawnP('battery', pick([0, 1, 1, 2, 2, 3, 3]));
   for (let r of rooms) for (const rr of r) if (rr._boarded) { /* bonus battery inside boarded rooms */ const f = rooms.indexOf(r); if (f >= 0) { const x = ri(rr.x0, rr.x1), y = ri(rr.y0, rr.y1); if (cellChar(f, x, y) === '.') addPickup('battery', f, cw(x), cw(y)); } }
   const diaryF = [0, 1, 2, 3, pick([1, 2, 3])];
@@ -669,7 +669,7 @@ function updateHud(force) {
   $('floorName').textContent = FLOOR_NAMES[P.f];
   const keys = countItem('key');
   let obj;
-  if (!G.genOn && !d.lights) obj = 'Basement mein fuse dhundo, phir generator (peele box) mein lagao.';
+  if (!G.genOn && !d.lights) obj = 'Isi kamre mein fuse dhundo, phir generator (peele box) mein lagao.';
   else if (!G.genOn) obj = 'Aaram se ghoomo. Fuse dhundo aur generator chalu karo (basement).';
   else if (!G.roofOpen) obj = `Chaabiyan jama karo (${keys}/${d.keys}) aur Doosri Manzil par chhat ke darwaze tak jaao.`;
   else obj = 'Chhat par jaao aur pipe se utarkar bhaag jao!';

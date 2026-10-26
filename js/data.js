@@ -74,7 +74,7 @@ export function buildMaps() {
     } else {
       ({ g, rooms } = baseFloor());
       if (f === 0) {
-        g[2][3] = 'G'; g[12][3] = 'S'; g[9][3] = 'g';
+        g[11][5] = 'G'; g[12][3] = 'S'; g[9][3] = 'g';
         for (const [x, y] of [[9, 2], [15, 4], [9, 12], [15, 12], [21, 2], [21, 12], [23, 4]]) g[y][x] = 'B';
         g[7][26] = 'U'; g[8][26] = 'U';
       } else if (f === 1) {
