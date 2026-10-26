@@ -177,7 +177,7 @@ function buildCell(f, x, y, ch, b) {
     case 'v': { const g = new THREE.Group(); bx(M.wood, 1.5, .7, .8, 0, .35, 0, g); bx(M.iron, 1.2, .8, .4, 0, 1.1, 0, g); const sc = bx(M.tvScreen.clone(), 1.05, .62, .02, 0, 1.1, .21, g); tvs.push(sc); g.position.set(px, b, pz); world.add(g); break; }
     case 't': { const g = new THREE.Group(); bx(M.porcelain, 1.7, 1.9, .1, 0, .95 + .05, .8, g); bx(M.porcelain, .1, 1.9, 1.7, -.8, 1, 0, g); bx(M.porcelain, .1, 1.9, 1.7, .8, 1, 0, g); bx(M.porcelain, .5, .45, .6, 0, .22, -.3, g); g.position.set(px, b, pz); world.add(g); break; }
     case 'B': { const g = new THREE.Group(); cy(M.rust, .85, 1.9, 0, .95, 0, g); cy(M.metal, .2, 1.1, .3, 2.4, 0, g); g.position.set(px, b, pz); world.add(g); break; }
-    case 'G': { const g = new THREE.Group(); bx(M.gen, 1.6, 1.1, 1.3, 0, .55, 0, g); bx(M.iron, 1.0, .5, 1.32, 0, .7, 0, g); cy(M.metal, .12, .6, .55, 1.4, -.3, g); const lamp = new THREE.Mesh(geo.sph, new THREE.MeshBasicMaterial({ color: 0x331111 })); lamp.scale.setScalar(.09); lamp.position.set(-.5, 1.08, .66); g.add(lamp); genLamp.m = lamp; g.position.set(px, b, pz); world.add(g); break; }
+    case 'G': { const g = new THREE.Group(); bx(M.gen, 1.6, 1.1, 1.3, 0, .55, 0, g); bx(M.iron, 1.0, .5, 1.32, 0, .7, 0, g); cy(M.metal, .12, .6, .55, 1.4, -.3, g); const lamp = new THREE.Mesh(geo.sph, new THREE.MeshBasicMaterial({ color: 0x331111 })); lamp.scale.setScalar(.09); lamp.position.set(-.5, 1.08, .66); g.add(lamp); genLamp.m = lamp; const gl = new THREE.PointLight(0xffb030, 2.2, 7, 2); gl.position.set(0, 1.6, 0); g.add(gl); g.position.set(px, b, pz); world.add(g); break; }
     case 'T': { if (x === 12 && y === 4) { const g = new THREE.Group(); cy(M.tank, 1.9, 2.6, 0, 2.4, 0, g); for (const [a, c] of [[-1.3, -1.3], [1.3, -1.3], [-1.3, 1.3], [1.3, 1.3]]) bx(M.rust, .15, 1.1, .15, a, .55, c, g); g.position.set(cw(12) + 1, b, cw(4) + 1); world.add(g); } break; }
     case 'X': { const g = new THREE.Group(); for (let i = 0; i < 8; i++) bx(M.iron, .06, 3, .06, 0, 1.5, -.9 + i * .26, g); bx(M.iron, .1, .1, 2, 0, .3, 0, g); bx(M.iron, .1, .1, 2, 0, 2.6, 0, g); g.position.set(px - .6, b, pz); world.add(g); break; }
     case 'P': { if (y === 7) { cy(M.rust, .13, 12, 0, 0, 0, world).position.set(W * CELL - .5, b - 4.2, cw(7) + 1); const c2 = cy(M.rust, .13, .15, 0, 0, 0, world); c2.position.set(W * CELL - .5, b + 1.45, cw(7) + 1); } break; }
@@ -218,7 +218,7 @@ function newGame(dk) {
   // inventory
   G.inv[0] = { id: 'torch', n: 1 }; G.inv[1] = { id: 'lathi', n: 1 }; G.inv[2] = { id: 'planks', n: 3 };
   // player spawn: basement start room
-  let sx = 3, sy = 12; P.f = 0; P.x = cw(sx); P.z = cw(sy); P.yaw = Math.PI; P.pitch = 0; P.py = 0; P.vy = 0; P.hidden = false; P.stairLock = false;
+  let sx = 3, sy = 12; P.f = 0; P.x = cw(sx); P.z = cw(sy); P.yaw = Math.PI / 2 * -1; P.pitch = 0; P.py = 0; P.vy = 0; P.hidden = false; P.stairLock = false;
   // random initial doors open
   for (let f = 0; f < FLOORS; f++) for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (cellChar(f, x, y) === 'D' && Math.random() < .3) setDoor(f, x, y, true, true);
   // boarded doors
@@ -669,7 +669,7 @@ function updateHud(force) {
   $('floorName').textContent = FLOOR_NAMES[P.f];
   const keys = countItem('key');
   let obj;
-  if (!G.genOn && !d.lights) obj = 'Isi kamre mein fuse dhundo, phir generator (peele box) mein lagao.';
+  if (!G.genOn && !d.lights) obj = 'Isi kamre mein fuse dhundo, phir generator (peele chamakte box, spawn se left/east deewar) mein lagao.';
   else if (!G.genOn) obj = 'Aaram se ghoomo. Fuse dhundo aur generator chalu karo (basement).';
   else if (!G.roofOpen) obj = `Chaabiyan jama karo (${keys}/${d.keys}) aur Doosri Manzil par chhat ke darwaze tak jaao.`;
   else obj = 'Chhat par jaao aur pipe se utarkar bhaag jao!';
