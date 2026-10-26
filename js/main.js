@@ -738,7 +738,8 @@ addEventListener('keydown', e => {
       case 'KeyA': case 'ArrowLeft': input.l = 1; break;
       case 'KeyD': case 'ArrowRight': input.r = 1; break;
       case 'ShiftLeft': case 'ShiftRight': input.sneak = true; break;
-      case 'ControlLeft': case 'ControlRight': case 'KeyR': input.sprintKey = true; break;
+      case 'ControlLeft': case 'ControlRight': if (input.f) input.wLatch = true; input.sprintKey = true; break;
+      case 'KeyR': input.sprintKey = true; break;
       case 'Space': input.jump = true; break;
       case 'KeyE': openInv(); break;
       case 'KeyF': toggleTorch(); break;
@@ -808,14 +809,17 @@ document.addEventListener('pointerlockchange', () => { if (document.pointerLockE
   btn('tAtk', () => { input.atk = true; attack(); }, () => { input.atk = false; }); btn('tUse', interact); btn('tThrow', throwBottle);
 })();
 
+async function goFull() {
+  try { if (!IS_TOUCH && !document.fullscreenElement) await document.documentElement.requestFullscreen(); if (navigator.keyboard && navigator.keyboard.lock) await navigator.keyboard.lock(['KeyW', 'KeyA', 'KeyS', 'KeyD', 'ControlLeft', 'ControlRight', 'Escape']); } catch (e) { /* ignore */ }
+}
 /* ---------------- UI wiring ---------------- */
 $('btnPlay').onclick = () => { Snd.init(); newGame(S.diff); runIntro(); };
-$('btnIntroGo').onclick = () => { introToken++; startPlay(); };
+$('btnIntroGo').onclick = () => { introToken++; goFull(); startPlay(); };
 $('btnIntroSkip').onclick = () => { introToken++; $('introText').textContent = INTRO[INTRO.length - 1]; $('btnIntroGo').classList.remove('hidden'); $('btnIntroSkip').classList.add('hidden'); };
 $('btnHow').onclick = () => openSub('how', 'menu');
 $('btnSettings').onclick = () => openSub('settings', 'menu');
 document.querySelectorAll('.back').forEach(b => { if (b.dataset.back) b.onclick = () => { hide(b.dataset.back); show(backTo); }; });
-$('btnResume').onclick = () => startPlay();
+$('btnResume').onclick = () => { goFull(); startPlay(); };
 $('btnPauseSettings').onclick = () => openSub('settings', 'pause');
 $('btnJournal').onclick = () => openSub('journal', 'pause');
 $('btnQuit').onclick = toMenu; $('btnDeadMenu').onclick = toMenu; $('btnWinMenu').onclick = toMenu;
