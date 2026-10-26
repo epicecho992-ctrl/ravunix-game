@@ -96,6 +96,7 @@ label.chk{display:flex;gap:8px;align-items:center}
 #tSneak{right:100px;bottom:34px}
 #tAtk{right:26px;bottom:176px}
 #tUse{right:100px;bottom:120px}
+#tThrow{right:100px;bottom:200px}
 #tTorch{right:26px;bottom:26px}
 #tInv{top:56px;right:14px}
 #tPause{top:56px;right:76px}

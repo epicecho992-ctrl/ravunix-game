@@ -238,6 +238,7 @@ function newGame(dk) {
   const spawnP = (kind, f, filter, extra) => { const [x, y] = cellIn(f, filter); addPickup(kind, f, cw(x), cw(y), extra); };
   const keyFloors = [1, 2, 3];
   for (let i = 0; i < d.keys; i++) spawnP('key', keyFloors[i % 3]);
+  for (let i = 0; i < 4; i++) spawnP('bottle', pick([0, 1, 1, 2, 2, 3]));
   spawnP('fuse', 0, r => !(r.x0 === 1 && r.y0 === 10));
   for (let i = 0; i < d.batt; i++) spawnP('battery', pick([0, 1, 1, 2, 2, 3, 3]));
   for (let r of rooms) for (const rr of r) if (rr._boarded) { /* bonus battery inside boarded rooms */ const f = rooms.indexOf(r); if (f >= 0) { const x = ri(rr.x0, rr.x1), y = ri(rr.y0, rr.y1); if (cellChar(f, x, y) === '.') addPickup('battery', f, cw(x), cw(y)); } }
@@ -271,12 +272,13 @@ function addPickup(kind, f, x, z, extra) {
   if (kind === 'key') { cy(M.gold, .09, .03, 0, 0, 0, g).rotation.x = Math.PI / 2; const m = bx(M.gold, .05, .05, .3, 0, 0, .18, g); bx(M.gold, .05, .1, .05, 0, -.04, .3, g); g.userData.glow = 0xffd36b; }
   else if (kind === 'battery') { cy(M.bat, .09, .3, 0, 0, 0, g); cy(M.gold, .04, .06, 0, .18, 0, g); }
   else if (kind === 'fuse') { cy(M.fuse, .08, .3, 0, 0, 0, g); cy(M.metal, .1, .05, 0, .17, 0, g); cy(M.metal, .1, .05, 0, -.17, 0, g); }
+  else if (kind === 'bottle') { cy(M.bat, .07, .28, 0, 0, 0, g); cy(M.bat, .03, .12, 0, .2, 0, g); }
   else if (kind === 'diary') { bx(M.paper, .32, .04, .42, 0, 0, 0, g); g.rotation.y = rnd(0, 6); }
   else if (kind === 'planks') { bx(M.plank, .6, .06, .14, 0, 0, 0, g); bx(M.plank, .6, .06, .14, 0, .07, .05, g).rotation.y = .3; }
   g.position.set(x, base(f) + .45, z); dyn.add(g);
   const p = { kind, f, x, z, mesh: g, t: rnd(0, 6), extra, n: 1, noPick: 0 }; G.pickups.push(p);
   // small marker light so items are easy to spot in the dark
-  if (kind !== 'planks') { const l = new THREE.PointLight(kind === 'key' ? 0xffd36b : kind === 'battery' ? 0x55ff88 : kind === 'fuse' ? 0xff6655 : 0xfff2c0, 1.2, 3, 2); l.position.y = .2; g.add(l); }
+  if (kind !== 'planks') { const l = new THREE.PointLight(kind === 'key' ? 0xffd36b : kind === 'battery' || kind === 'bottle' ? 0x55ff88 : kind === 'fuse' ? 0xff6655 : 0xfff2c0, 1.2, 3, 2); l.position.y = .2; g.add(l); }
   return p;
 }
 function itemOf(p) { return p.kind === 'diary' ? 'diary' : p.kind; }
@@ -305,6 +307,26 @@ function renderInvGrid() {
     const d = document.createElement('div'); d.className = 'slot' + (G.invHold === i ? ' sw' : '') + (i < 9 && G.sel === i ? ' sel' : ''); d.innerHTML = slotHTML(G.inv[i], i, i < 9 ? i + 1 : '');
     d.addEventListener('click', () => { if (G.invHold < 0) { if (G.inv[i]) G.invHold = i; } else { const a = G.invHold; [G.inv[a], G.inv[i]] = [G.inv[i], G.inv[a]]; G.invHold = -1; } renderInvGrid(); renderHotbar(); });
     g.appendChild(d);
+  }
+}
+function throwBottle() {
+  if (!G || mode !== 'play' || P.hidden) return;
+  if (!takeItem('bottle', 1)) { toast('Botal nahi hai. Kaanch ki botal dhundo 🍾', 1600); return; }
+  Snd.whoosh(); const d = G.d;
+  const fx = -Math.sin(P.yaw) * Math.cos(P.pitch), fz = -Math.cos(P.yaw) * Math.cos(P.pitch);
+  const dx = ghost.x - P.x, dz = ghost.z - P.z, dist = Math.hypot(dx, dz);
+  const aim = dist > .1 ? (dx * fx + dz * fz) / (dist * Math.hypot(fx, fz)) : 0;
+  if (d.ghost && ghost.f === P.f && dist < 14 && aim > .95 && ghost.stun <= 0 && clearLine(P.f, P.x, P.z, ghost.x, ghost.z)) {
+    setTimeout(() => {
+      Snd.breakWood(); Snd.hit();
+      if (d.stun <= 0) { toast('Ravunix pe botal toot gayi, par use kuch nahi hua! Bhaago!', 2200); ghost.state = 'chase'; ghost.lastSeen = ghost.t; return; }
+      if (G.stunCd > 0) { toast(`Botal lagi, par abhi tayyar nahi (${Math.ceil(G.stunCd)} sec)`, 1500); return; }
+      ghost.stun = d.stun; ghost.path = []; ghost.state = 'search'; ghost.invT = 6; G.stunCd = d.cd; noise(12);
+      toast(`Botal muh pe lagi! Ravunix ${d.stun} sec ke liye gir gaya 😵`, 2200);
+    }, dist * 40);
+  } else {
+    const x = P.x + fx * 6, z = P.z + fz * 6; const k = clearLine(P.f, P.x, P.z, x, z);
+    setTimeout(() => { Snd.breakWood(); noise(14); }, 350); toast(k ? 'Nishana chuka! Botal tootne ki awaaz se Ravunix aayega' : 'Botal deewar se takrayi', 1800);
   }
 }
 function dropSel() {
@@ -712,7 +734,8 @@ addEventListener('keydown', e => {
       case 'Space': input.jump = true; break;
       case 'KeyE': openInv(); break;
       case 'KeyF': toggleTorch(); break;
-      case 'KeyQ': dropSel(); break;
+      case 'KeyQ': throwBottle(); break;
+      case 'KeyG': dropSel(); break;
       case 'Tab': break;
       default: if (e.code.startsWith('Digit')) { const n = +e.code.slice(5); if (n >= 1 && n <= 9) { G.sel = n - 1; renderHotbar(); } }
     }
@@ -774,7 +797,7 @@ document.addEventListener('pointerlockchange', () => { if (document.pointerLockE
   btn('tJump', () => { input.jump = true; }, () => { input.jump = false; });
   btn('tSneak', () => { input.sneakT = !input.sneakT; $('tSneak').classList.toggle('on', input.sneakT); });
   btn('tTorch', toggleTorch); btn('tInv', () => { mode === 'inv' ? closeInv() : openInv(); }); btn('tPause', pauseGame);
-  btn('tAtk', () => { input.atk = true; attack(); }, () => { input.atk = false; }); btn('tUse', interact);
+  btn('tAtk', () => { input.atk = true; attack(); }, () => { input.atk = false; }); btn('tUse', interact); btn('tThrow', throwBottle);
 })();
 
 /* ---------------- UI wiring ---------------- */
@@ -820,5 +843,5 @@ window.__rx = {
   begin(dk) { S.diff = dk || S.diff; newGame(S.diff); introToken++; hideAll(); mode = 'play'; $('hud').classList.remove('hidden'); Snd.init(); last = performance.now(); },
   tp(f, cx, cy_, yaw) { P.f = f; P.x = cw(cx); P.z = cw(cy_); if (yaw !== undefined) P.yaw = yaw; P.stairLock = true; },
   step(sec, dt = .033) { for (let t = 0; t < sec; t += dt) { if (mode === 'play') update(dt); } },
-  use: interact, atk: attack, targetCell, bfs, openInv, die, setSel(i) { G.sel = i; renderHotbar(); },
+  use: interact, throwBottle, atk: attack, targetCell, bfs, openInv, die, setSel(i) { G.sel = i; renderHotbar(); },
 };

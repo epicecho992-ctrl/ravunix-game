@@ -23,6 +23,7 @@ export const ITEMS = {
   lathi:   { name: 'Lathi',          icon: '🏏', stack: 1 },
   battery: { name: 'Battery',        icon: '🔋', stack: 8 },
   planks:  { name: 'Lakdi ke takhte',icon: '🪵', stack: 8 },
+  bottle:  { name: 'Kaanch ki botal', icon: '🍾', stack: 4 },
   key:     { name: 'Chaabi',         icon: '🔑', stack: 9, quest: true },
   fuse:    { name: 'Fuse',           icon: '🧯', stack: 1, quest: true },
   diary:   { name: 'Diary ka panna', icon: '📄', stack: 9, quest: true },
