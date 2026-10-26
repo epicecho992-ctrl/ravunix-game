@@ -200,7 +200,7 @@ const input = { f: 0, b: 0, l: 0, r: 0, sneak: false, sprintKey: false, jump: fa
 function playerSolid(f, x, y) {
   const ch = cellChar(f, x, y);
   if (SOLID_P.has(ch)) return true;
-  if (G.barr.has(KEY(f, x, y))) return true;
+  if (G.barr.has(KEY(f, x, y)) || G.crates.has(KEY(f, x, y))) return true;
   if (isDoor(ch)) return !G.open.has(KEY(f, x, y));
   return false;
 }
@@ -209,7 +209,7 @@ function collide(f, x, z) { const r = .32; for (const [a, c] of [[-r, -r], [r, -
 function newGame(dk) {
   const d = DIFF[dk];
   G = {
-    dk, d, time: 0, open: new Set(), barr: new Map(), genOn: false, roofOpen: false, inv: Array(36).fill(null), sel: 0,
+    dk, d, time: 0, open: new Set(), barr: new Map(), crates: new Map(), genOn: false, roofOpen: false, inv: Array(36).fill(null), sel: 0,
     torchOn: true, batt: 100, pickups: [], noiseEv: 0, atkT: 0, stunCd: 0, diaries: new Set(), msgT: 0, deaths: 0, dead: false, won: false, swing: 0, invHold: -1,
   };
   // clear dynamic meshes
@@ -238,7 +238,7 @@ function newGame(dk) {
   const spawnP = (kind, f, filter, extra) => { const [x, y] = cellIn(f, filter); addPickup(kind, f, cw(x), cw(y), extra); };
   const keyFloors = [1, 2, 3];
   for (let i = 0; i < d.keys; i++) spawnP('key', keyFloors[i % 3]);
-  for (let i = 0; i < 4; i++) spawnP('bottle', pick([0, 1, 1, 2, 2, 3]));
+  for (let i = 0; i < 5; i++) { const f = pick([0, 1, 1, 2, 2, 3]); const [x, y] = cellIn(f); addCrate(f, x, y, ri(1, 2)); }
   spawnP('fuse', 0, r => !(r.x0 === 1 && r.y0 === 10));
   for (let i = 0; i < d.batt; i++) spawnP('battery', pick([0, 1, 1, 2, 2, 3, 3]));
   for (let r of rooms) for (const rr of r) if (rr._boarded) { /* bonus battery inside boarded rooms */ const f = rooms.indexOf(r); if (f >= 0) { const x = ri(rr.x0, rr.x1), y = ri(rr.y0, rr.y1); if (cellChar(f, x, y) === '.') addPickup('battery', f, cw(x), cw(y)); } }
@@ -264,6 +264,10 @@ function addBarr(f, x, y) {
   const g = new THREE.Group();
   for (let i = 0; i < 4; i++) { const m = bx(M.plank, alongX ? 1.9 : .12, .22, alongX ? .12 : 1.9, 0, .45 + i * .5, 0, g); m.rotation.z = rnd(-.07, .07); m.rotation.x = rnd(-.04, .04); }
   g.position.set(cw(x), base(f), cw(y)); g.userData.k = k; dyn.add(g); G.barrMesh = G.barrMesh || new Map(); G.barrMesh.set(k, g);
+}
+function addCrate(f, x, y, n) {
+  const g = new THREE.Group(); bx(M.wood, .95, .8, .95, 0, .4, 0, g); bx(M.rust, 1, .08, 1, 0, .8, 0, g); bx(M.rust, .08, .8, 1.0, 0, .4, 0, g); bx(M.rust, 1.0, .8, .08, 0, .4, 0, g);
+  g.position.set(cw(x), base(f), cw(y)); g.rotation.y = rnd(0, 3); dyn.add(g); G.crates.set(KEY(f, x, y), { hp: 2, n, mesh: g, f, x, y });
 }
 function removeBarr(f, x, y) { const k = KEY(f, x, y); G.barr.delete(k); const g = G.barrMesh && G.barrMesh.get(k); if (g) { dyn.remove(g); G.barrMesh.delete(k); } }
 
@@ -311,14 +315,14 @@ function renderInvGrid() {
 }
 function throwBottle() {
   if (!G || mode !== 'play' || P.hidden) return;
-  if (!takeItem('bottle', 1)) { toast('Botal nahi hai. Kaanch ki botal dhundo 🍾', 1600); return; }
+  if (!takeItem('bottle', 1)) { toast('Botal nahi hai. Dabbe todke botal nikalo 🍾', 1600); return; }
   Snd.whoosh(); const d = G.d;
   const fx = -Math.sin(P.yaw) * Math.cos(P.pitch), fz = -Math.cos(P.yaw) * Math.cos(P.pitch);
   const dx = ghost.x - P.x, dz = ghost.z - P.z, dist = Math.hypot(dx, dz);
   const aim = dist > .1 ? (dx * fx + dz * fz) / (dist * Math.hypot(fx, fz)) : 0;
   if (d.ghost && ghost.f === P.f && dist < 14 && aim > .95 && ghost.stun <= 0 && clearLine(P.f, P.x, P.z, ghost.x, ghost.z)) {
     setTimeout(() => {
-      Snd.breakWood(); Snd.hit();
+      Snd.hit(); addPickup('bottle', ghost.f, ghost.x, ghost.z);
       if (d.stun <= 0) { toast('Ravunix pe botal toot gayi, par use kuch nahi hua! Bhaago!', 2200); ghost.state = 'chase'; ghost.lastSeen = ghost.t; return; }
       if (G.stunCd > 0) { toast(`Botal lagi, par abhi tayyar nahi (${Math.ceil(G.stunCd)} sec)`, 1500); return; }
       ghost.stun = d.stun; ghost.path = []; ghost.state = 'search'; ghost.invT = 6; G.stunCd = d.cd; noise(12);
@@ -326,7 +330,7 @@ function throwBottle() {
     }, dist * 40);
   } else {
     const x = P.x + fx * 6, z = P.z + fz * 6; const k = clearLine(P.f, P.x, P.z, x, z);
-    setTimeout(() => { Snd.breakWood(); noise(14); }, 350); toast(k ? 'Nishana chuka! Botal tootne ki awaaz se Ravunix aayega' : 'Botal deewar se takrayi', 1800);
+    const lf = P.f; setTimeout(() => { Snd.hit(); noise(14); if (!G.dead && !collide(lf, x, z)) addPickup('bottle', lf, x, z); else if (!G.dead) addPickup('bottle', lf, P.x + fx, P.z + fz); }, 350); toast(k ? 'Nishana chuka! Awaaz se Ravunix aayega. Botal wapas utha lo' : 'Botal deewar se takrayi, utha lo', 1800);
   }
 }
 function dropSel() {
@@ -492,6 +496,7 @@ function targetCell() {
   for (let t = .45; t <= 2.6; t += .12) {
     const x = toCell(P.x + dx * t), y = toCell(P.z + dz * t), ch = cellChar(P.f, x, y), k = KEY(P.f, x, y);
     if (G.barr.has(k)) return { x, y, ch: 'barr', t };
+    if (G.crates.has(k)) return { x, y, ch: 'crate', t };
     if (isDoor(ch) || playerSolid(P.f, x, y)) return { x, y, ch, t };
   }
   return null;
@@ -539,6 +544,7 @@ function attack() {
   // barricade
   const t = targetCell();
   if (t && t.ch === 'barr' && t.t < 2.4) { const k = KEY(P.f, t.x, t.y); const hp = G.barr.get(k) - 1; noise(16); Snd.breakWood(); if (hp <= 0) { removeBarr(P.f, t.x, t.y); toast('Takhte toot gaye', 900); } else G.barr.set(k, hp); return; }
+  if (t && t.ch === 'crate' && t.t < 2.4) { const k = KEY(P.f, t.x, t.y), c = G.crates.get(k); c.hp--; noise(12); Snd.breakWood(); if (c.hp <= 0) { dyn.remove(c.mesh); G.crates.delete(k); for (let i = 0; i < c.n; i++) { const p = addPickup('bottle', P.f, cw(t.x) + rnd(-.4, .4), cw(t.y) + rnd(-.4, .4)); p.noPick = .5; } toast('Dabba toot gaya! Botal mili 🍾', 1600); } return; }
   // ghost
   if (d.ghost && ghost.f === P.f && ghost.stun <= 0) {
     const dx = ghost.x - P.x, dz = ghost.z - P.z, dist = Math.hypot(dx, dz); const fx = -Math.sin(P.yaw), fz = -Math.cos(P.yaw);
@@ -638,7 +644,7 @@ function update(dt) {
   updateHud();
   // prompt
   const t = (mode === 'play' && !P.hidden) ? targetCell() : null; $('prompt').classList.toggle('on', !!t && t.t < 2.4);
-  if (t) $('prompt').textContent = ({ D: 'Right click / tap: darwaza', g: 'Right click / tap: darwaza', R: 'Right click / tap: chhat ka darwaza', G: 'Right click / tap: generator', A: 'Right click / tap: chhupo', P: 'Right click / tap: pipe se utro', barr: 'Left click / hold: takhte todo', v: 'TV', X: 'Gate' })[t.ch] || '';
+  if (t) $('prompt').textContent = ({ D: 'Right click / tap: darwaza', g: 'Right click / tap: darwaza', R: 'Right click / tap: chhat ka darwaza', G: 'Right click / tap: generator', A: 'Right click / tap: chhupo', P: 'Right click / tap: pipe se utro', barr: 'Left click / hold: takhte todo', crate: 'Left click: dabba todo', v: 'TV', X: 'Gate' })[t.ch] || '';
   if (t && !$('prompt').textContent) $('prompt').classList.remove('on');
 }
 const vm = new THREE.Group(); camera.add(vm);
