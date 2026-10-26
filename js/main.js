@@ -622,7 +622,9 @@ function update(dt) {
   // items auto-pickup
   for (let i = G.pickups.length - 1; i >= 0; i--) {
     const p = G.pickups[i]; p.t += dt; p.mesh.position.y = base(p.f) + .45 + Math.sin(p.t * 2) * .06; p.mesh.rotation.y += dt * 1.2; p.noPick -= dt;
-    if (p.f === P.f && p.noPick <= 0 && !P.hidden && Math.hypot(p.x - P.x, p.z - P.z) < .95) {
+    const pd = Math.hypot(p.x - P.x, p.z - P.z);
+    if (p.f === P.f && p.noPick <= 0 && !P.hidden && pd < 1.9 && pd > .01) { const sp = (5 + (1.9 - pd) * 6) * dt / pd; p.x += (P.x - p.x) * sp; p.z += (P.z - p.z) * sp; p.mesh.position.x = p.x; p.mesh.position.z = p.z; }
+    if (p.f === P.f && p.noPick <= 0 && !P.hidden && pd < .7) {
       const id = itemOf(p);
       if (addItem(id, 1) <= 0) {
         dyn.remove(p.mesh); G.pickups.splice(i, 1); Snd.pickup(); noise(2);
