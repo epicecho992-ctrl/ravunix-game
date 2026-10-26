@@ -650,6 +650,7 @@ function update(dt) {
   const t = (mode === 'play' && !P.hidden) ? targetCell() : null; $('prompt').classList.toggle('on', !!t && t.t < 2.4);
   if (t) $('prompt').textContent = ({ D: 'Right click / tap: darwaza', g: 'Right click / tap: darwaza', R: 'Right click / tap: chhat ka darwaza', G: 'Right click / tap: generator', A: 'Right click / tap: chhupo', P: 'Right click / tap: pipe se utro', barr: 'Left click / hold: takhte todo', crate: 'Left click: dabba todo', v: 'TV', X: 'Gate' })[t.ch] || '';
   if (t && !$('prompt').textContent) $('prompt').classList.remove('on');
+  if (t && t.ch === 'barr' && t.t < 2.4 && !G.hintBarr) { G.hintBarr = true; toast('Darwaze par takhte lage hain! Left click 3 baar se todo, phir right click se kholo 🪵', 4000); }
 }
 const vm = new THREE.Group(); camera.add(vm);
 const vmTorch = new THREE.Group(); cy(M.metal, .035, .28, 0, 0, 0, vmTorch); cy(M.iron, .05, .1, 0, .17, 0, vmTorch); const tipMat = new THREE.MeshBasicMaterial({ color: 0xfff2c0 }); const tip = cy(tipMat, .045, .02, 0, .23, 0, vmTorch); vmTorch.rotation.set(-1.15, 0, 0); vmTorch.position.set(.28, -.26, -.45); vm.add(vmTorch);
