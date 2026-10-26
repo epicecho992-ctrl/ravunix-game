@@ -238,7 +238,7 @@ function newGame(dk) {
   const spawnP = (kind, f, filter, extra) => { const [x, y] = cellIn(f, filter); addPickup(kind, f, cw(x), cw(y), extra); };
   const keyFloors = [1, 2, 3];
   for (let i = 0; i < d.keys; i++) spawnP('key', keyFloors[i % 3]);
-  for (let i = 0; i < 5; i++) { const f = pick([0, 1, 1, 2, 2, 3]); const [x, y] = cellIn(f); addCrate(f, x, y, ri(1, 2)); }
+  for (let i = 0; i < 5; i++) { const f = pick([0, 1, 1, 2, 2, 3]); let x, y; for (let t = 0; t < 30; t++) { [x, y] = cellIn(f); const nearDoor = [[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [-1, -1], [1, -1], [-1, 1]].some(([a, b]) => isDoor(cellChar(f, x + a, y + b)) || cellChar(f, x + a, y + b) === 'U' || cellChar(f, x + a, y + b) === 'N'); if (!nearDoor && !(f === 0 && x <= 5 && y >= 10)) break; } addCrate(f, x, y, ri(1, 2)); }
   spawnP('fuse', 0, r => r.x0 === 1 && r.y0 === 10);
   for (let i = 0; i < d.batt; i++) spawnP('battery', pick([0, 1, 1, 2, 2, 3, 3]));
   for (let r of rooms) for (const rr of r) if (rr._boarded) { /* bonus battery inside boarded rooms */ const f = rooms.indexOf(r); if (f >= 0) { const x = ri(rr.x0, rr.x1), y = ri(rr.y0, rr.y1); if (cellChar(f, x, y) === '.') addPickup('battery', f, cw(x), cw(y)); } }
@@ -495,6 +495,7 @@ function targetCell() {
   const dx = -Math.sin(P.yaw), dz = -Math.cos(P.yaw);
   for (let t = .45; t <= 2.6; t += .12) {
     const x = toCell(P.x + dx * t), y = toCell(P.z + dz * t), ch = cellChar(P.f, x, y), k = KEY(P.f, x, y);
+    if (x === toCell(P.x) && y === toCell(P.z)) continue;
     if (G.barr.has(k)) return { x, y, ch: 'barr', t };
     if (G.crates.has(k)) return { x, y, ch: 'crate', t };
     if (isDoor(ch) || playerSolid(P.f, x, y)) return { x, y, ch, t };
@@ -502,7 +503,7 @@ function targetCell() {
   return null;
 }
 function goFloor(df) {
-  P.f += df; P.stairLock = true; const fd = $('fade'); fd.style.transition = 'none'; fd.style.opacity = 1; requestAnimationFrame(() => { fd.style.transition = 'opacity .45s'; fd.style.opacity = 0; });
+  P.f += df; P.stairLock = true; P.x = cw(toCell(P.x)); P.z = cw(toCell(P.z)); const fd = $('fade'); fd.style.transition = 'none'; fd.style.opacity = 1; requestAnimationFrame(() => { fd.style.transition = 'opacity .45s'; fd.style.opacity = 0; });
   toast(FLOOR_NAMES[P.f], 1600); Snd.step(false, false); G.ghostDist = 99;
 }
 function interact() {
@@ -603,6 +604,7 @@ function update(dt) {
     G.moveNoise = moving ? (sneak ? 1.6 : wantsSprint ? 11 : 5.5) : 0;
     if (moving && P.ground) { P.bob += dt * (wantsSprint ? 11 : sneak ? 5 : 8); P.stepT -= dt * (wantsSprint ? 3.4 : sneak ? 1.4 : 2.2); if (P.stepT <= 0) { Snd.step(sneak, wantsSprint); P.stepT = 1; } }
   } else G.moveNoise = 0;
+  if (!P.hidden && collide(P.f, P.x, P.z)) { P.x = cw(toCell(P.x)); P.z = cw(toCell(P.z)); }
   // stairs
   const pcx = toCell(P.x), pcy = toCell(P.z), pch = cellChar(P.f, pcx, pcy);
   if (pch !== 'U' && pch !== 'N') P.stairLock = false;
